@@ -7,6 +7,17 @@
 
 
         <div id="headerContainer" class="headerExperienceOn">
+            <script type="text/javascript">
+                // US54468 -> for details
+                (function docUpdate() {
+                var docDomain = document.domain;
+
+                if (document.location.hostname.indexOf("www") < 0) {
+                docDomain = document.domain.match(/\.(.*)$/)[1];
+                }
+                document.cookie = "BETEX_ESD=accountservices; domain=."+docDomain+"; path=/;";
+                })();
+            </script>
             <div id="heading" class="nav_i13n topnav_i13n darkBackground fixedHeaderWidth" data-shck="0">
                 <div id="navAccountContainer" class="nav_i13n-prod-www nav_i13n-brnd-ALL_BRANDS nav_i13n-region-GBR nav_i13n-loc-en nav_i13n-thm-mantis-sbw">
                     <!-- Global Navigation -->
@@ -257,7 +268,7 @@
 
     <ul class="ui-clickselect-container">
         <li class="allSportsTab ">
-            <a href="/sport/horse-racing?modules=subnav1020&amp;allSports=true" class="ui-expandable allSportsLink ui-betslip-action" data-target=".full-sports-list" data-mode="default" data-collapsed-height="0" data-behavior="toggle" data-betslip-action="adjust-size">
+            <a href="/sport/horse-racing?modules=subnav@1020&amp;allSports=true" class="ui-expandable allSportsLink ui-betslip-action" data-target=".full-sports-list" data-mode="default" data-collapsed-height="0" data-behavior="toggle" data-betslip-action="adjust-size">
                 <span class="sportIcon-ALLSPORTS"></span>
                 <span class="divider">&nbsp;</span>
                 <span class="sportName">All Sports (23)</span>

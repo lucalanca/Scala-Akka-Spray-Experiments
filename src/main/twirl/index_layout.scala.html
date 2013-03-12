@@ -1,0 +1,33 @@
+@(heads : List[Html], bodies : List[Html])
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js ua-is-ie ua-lt-ie9 ua-lt-ie8 ua-lt-ie7" lang="en-GB"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js ua-is-ie ua-lt-ie9 ua-lt-ie8 ua-is-ie7" lang="en-GB"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js ua-is-ie ua-lt-ie9" lang="en-GB"> <![endif]-->
+<!--[if gt IE 8]>      <html class="no-js ua-is-ie" lang="en-GB"> <![endif]-->
+<!--[if !(IE)]><!-->   <html class="no-js" lang="en-GB"> <!--<![endif]-->
+<head>
+    <title>betfair.com | Online Sports Betting</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
+    <meta name="description" content="Find great value on the latest online sports betting markets, bet in-play, get match updates, watch sport on Live Video and see recommended bets for you.">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <meta name="apple-mobile-web-app-title" content="Betfair" />
+    <link rel="shortcut icon" href="//sb3.cdnbf.net/sbw-resources/favicon_2000_.ico"/>
+    <link rel="apple-touch-icon-precomposed" sizes="57x57" href="//sb3.cdnbf.net/sbw-resources/page/images/favicon_57x57_2000_.png"/>
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="//sb3.cdnbf.net/sbw-resources/page/images/favicon_144x144_2000_.png"/>
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="//sb3.cdnbf.net/sbw-resources/page/images/favicon_72x72_2000_.png"/>
+    @for(h <- heads) {
+        @h
+    }
+
+    <link href="//sb2.cdnbf.net/sbw-resources/wro/all_2000_.css" type="text/css" rel="stylesheet">
+
+</head>
+<body class="lang-en ">
+
+@for(b <- bodies){
+    @b
+}
+
+</body>
+</html>

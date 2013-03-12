@@ -9,6 +9,7 @@ import common.messages._
 import concurrent.{Future, Await}
 import spray.http.MediaTypes
 import MediaTypes._
+import twirl.api.Html
 
 class MyServiceActor extends Actor with HttpServiceActor {
   var pagesRepo  = context.actorOf(Props[PagesRepository])
@@ -17,9 +18,10 @@ class MyServiceActor extends Actor with HttpServiceActor {
   def receive = runRoute {
     get {
       path(PathElement) { page_path =>
-        var future : Future[HTMLPage] = (pagesRepo ? PageRequest(page_path)).mapTo[HTMLPage]
+        var future : Future[Html] = (pagesRepo ? PageRequest(page_path)).mapTo[Html]
+        println("received rendered: " + future)
         var result = Await.result(future, timeout.duration)
-        respondWithMediaType(`text/html`) {complete(result.root.toString) }
+        respondWithMediaType(`text/html`) {complete(result.toString) }
       }
     }
   }
