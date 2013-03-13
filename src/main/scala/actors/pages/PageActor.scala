@@ -26,17 +26,28 @@ trait PageActor extends Actor {
       var heads  : ArrayBuffer[Html] = new ArrayBuffer[Html]()
       var bodies : ArrayBuffer[Html] = new ArrayBuffer[Html]()
 
-      val futureList = Future.traverse((1 to modules.length).toList)(x => (moduleRepository ? ModuleRequest(modules(x-1))).mapTo[ModuleHTML])
-      futureList.map { list =>
-        list.foreach{ module =>
-            println("received module " + module.head)
-            heads.append(module.head)
-            bodies.append(module.body)
-        }
-        println("received all modules: " + heads.length)
-        sender ! render(PageHTML(heads.toList, bodies.toList))
+//      val futureList = Future.traverse((1 to modules.length).toList)(x => (moduleRepository ? ModuleRequest(modules(x-1))).mapTo[ModuleHTML])
+//      futureList.map { list =>
+//        list.foreach{ module =>
+//            println("received module " + module.head)
+//            heads.append(module.head)
+//            bodies.append(module.body)
+//        }
+//        println("received all modules: " + heads.length)
+//        sender ! render(PageHTML(heads.toList, bodies.toList))
+//      }
+
+
+
+      // TODO: this code doesn't run assync. Debug code above for assynch.
+      for(m <- modules) {
+        // TODO: load modules assynchrounously instead of blocking the calls
+        var future : Future[ModuleHTML] = (moduleRepository ? ModuleRequest(m)).mapTo[ModuleHTML]
+        var result = Await.result(future, timeout.duration)
+        heads.append(result.head)
+        bodies.append(result.body)
       }
-      println("i'm i assync?")
+      sender ! render(PageHTML(heads.toList, bodies.toList))
   }
 }
 
