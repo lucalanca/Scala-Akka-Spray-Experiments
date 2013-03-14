@@ -1,7 +1,7 @@
 package actors.pages
 
 import akka.actor._
-import common.messages._
+import common.Messages._
 import akka.pattern._
 import akka.util.Timeout
 import utils.TimeKeeper
@@ -11,20 +11,44 @@ import scala.xml._
 import twirl.api.Html
 import collection.mutable.{ListBuffer, ArrayBuffer}
 import akka.actor.ActorRef
+import collection.mutable
+import java.util
+import spray.util.SprayActorLogging
 
 
-trait PageActor extends Actor {
-  implicit val timeout = Timeout(500)
-  var modules : List[String]
-  var moduleRepository : ActorRef = context.actorOf(Props[ModuleRepository])
-  var pageName   : String
-  def render(page : PageHTML) : Html
+abstract class PageActor(pagesRepo: ActorRef, modulesRepo: ActorRef) extends Actor with SprayActorLogging {
+  val TAG : String
+  def l(s: String) : Unit = { println(TAG+s) }
+
   import context.dispatcher
+  implicit val timeout = Timeout(5000)
+
+  var modulesMap : mutable.LinkedHashMap[String, ModuleHTML] = new mutable.LinkedHashMap[String, ModuleHTML]
+  var modules : List[String]
+
+  var pageName   : String
+
+  def render(page : PageHTML) : Html
+
+
 
   def receive = {
-    case _ =>
+    case p : String => {
+      for(m <- modules) {
+        var future = modulesRepo ? ModuleRequest(m)
+        var result = Await.result(future, timeout.duration).asInstanceOf[RenderedModule]
+        l("received" + result.name)
+        if (!modulesMap.contains(result.name))  modulesMap.put(result.name, result.rendered)
+      }
       var heads  : ArrayBuffer[Html] = new ArrayBuffer[Html]()
       var bodies : ArrayBuffer[Html] = new ArrayBuffer[Html]()
+      for(m <- modulesMap.values.toList){
+        heads.append(m.asInstanceOf[ModuleHTML].head)
+        bodies.append(m.asInstanceOf[ModuleHTML].body)
+      }
+      sender ! render(PageHTML(heads.toList, bodies.toList))
+    }
+
 
 //      val futureList = Future.traverse((1 to modules.length).toList)(x => (moduleRepository ? ModuleRequest(modules(x-1))).mapTo[ModuleHTML])
 //      futureList.map { list =>
@@ -38,20 +62,30 @@ trait PageActor extends Actor {
 //      }
 
 
+  }
+  def addRenderedModule(mod: RenderedModule) : Unit = {
+    if (!modulesMap.contains(mod.name))  modulesMap.put(mod.name, mod.rendered)
+  }
 
-      // TODO: this code doesn't run assync. Debug code above for assynch.
-      for(m <- modules) {
-        // TODO: load modules assynchrounously instead of blocking the calls
-        var future : Future[ModuleHTML] = (moduleRepository ? ModuleRequest(m)).mapTo[ModuleHTML]
-        var result = Await.result(future, timeout.duration)
-        heads.append(result.head)
-        bodies.append(result.body)
-      }
-      sender ! render(PageHTML(heads.toList, bodies.toList))
+  def allRendered() : Boolean = modulesMap.size == modules.size
+
+  def sendPage() : Unit = {
+    var heads  : ArrayBuffer[Html] = new ArrayBuffer[Html]()
+    var bodies : ArrayBuffer[Html] = new ArrayBuffer[Html]()
+    for(m <- modulesMap.values.toList){
+      heads.append(m.asInstanceOf[ModuleHTML].head)
+      bodies.append(m.asInstanceOf[ModuleHTML].body)
+    }
+    l("Sending to : " + pagesRepo.path.toString)
+
+    val html = render(PageHTML(heads.toList, bodies.toList))
+    pagesRepo ! html
   }
 }
 
-class IndexActor extends PageActor {
+class IndexActor(pagesRepo: ActorRef, modulesRepo: ActorRef) extends PageActor(pagesRepo, modulesRepo) {
+  val TAG = "[IndexActor] "
+
   var modules = List("infobar", "header", "maincontainer", "footer")
   var pageName = "Index"
   def render(page: PageHTML) : Html = {
@@ -59,9 +93,12 @@ class IndexActor extends PageActor {
   }
 }
 
-class ExchangeActor extends PageActor {
+class ExchangeActor(pagesRepo: ActorRef, modulesRepo: ActorRef) extends PageActor(pagesRepo, modulesRepo) {
+  val TAG = "[ExchangeActor] "
+
   var modules = List("infobar")
   var pageName = "Exchange"
+
 
   def render(page: PageHTML) : Html = {
     html.exchange_layout.render(page.heads, page.bodies)

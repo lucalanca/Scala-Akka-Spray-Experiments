@@ -2,60 +2,49 @@ package actors.modules
 
 import akka.actor.{ActorRef, Props, Actor}
 import akka.pattern._
-import common.messages.{ModuleRequest, ModuleHTML}
-import akka.routing.RoundRobinRouter
-import utils.TimeKeeper
+import common.Messages._
 import akka.util.Timeout
 import concurrent.ExecutionContext
-import ExecutionContext.Implicits.global
 import twirl.api.Html
+import scala.collection.mutable.LinkedHashMap
+import common.Messages.ModuleRequest
+import common.Messages.RenderedModule
+import scala.Some
 
 
 class ModuleRepository extends Actor {
+  val TAG = "[ModuleRepository] "
+  def l(s: String) : Unit = { println(TAG+s) }
+
+  import context.dispatcher
+
   implicit val timeout = Timeout(5000)
 
+  override def preStart() = {
+    initializeModules()
+  }
+
   // TODO: load modules from a file or something
-  var modules : List[ActorRef] = List(
-    context.actorOf(Props[Header].withRouter(RoundRobinRouter(nrOfInstances = 10))),
-    context.actorOf(Props[Sidebar].withRouter(RoundRobinRouter(nrOfInstances = 10))),
-    context.actorOf(Props[Infobar].withRouter(RoundRobinRouter(nrOfInstances = 10))),
-    context.actorOf(Props[Footer].withRouter(RoundRobinRouter(nrOfInstances = 10))),
-    context.actorOf(Props[MainContainer].withRouter(RoundRobinRouter(nrOfInstances = 10)))
-  )
+  var modulesRefMap = LinkedHashMap[String,ActorRef]()
+
+  def initializeModules() = {
+    modulesRefMap.put("header"       , context.actorOf(Props[Header]       , "header_actor"))
+    modulesRefMap.put("sidebar"      , context.actorOf(Props[Sidebar]      , "sidebar_actor"))
+    modulesRefMap.put("infobar"      , context.actorOf(Props[Infobar]      , "infobar_actor"))
+    modulesRefMap.put("footer"       , context.actorOf(Props[Footer]       , "footer_actor"))
+    modulesRefMap.put("maincontainer", context.actorOf(Props[MainContainer], "maincontainer_actor"))
+  }
+
 
   def receive = {
-    // TODO: add some type of versioning here
-    case ModuleRequest("header")         => (modules(0) ? "yabadabadoo").mapTo[ModuleHTML] pipeTo sender
-    case ModuleRequest("sidebar")        => (modules(1) ? "yabadabadoo").mapTo[ModuleHTML] pipeTo sender
-    case ModuleRequest("infobar")        => (modules(2) ? "yabadabadoo").mapTo[ModuleHTML] pipeTo sender
-    case ModuleRequest("footer")         => (modules(3) ? "yabadabadoo").mapTo[ModuleHTML] pipeTo sender
-    case ModuleRequest("maincontainer")  => (modules(4) ? "yabadabadoo").mapTo[ModuleHTML] pipeTo sender
+    case ModuleRequest(name) => {
+      l("got request for " + name)
+      (modulesRefMap.get(name)) match {
+        case None         => l("couldn't find module " + name)
+        case Some(result) => (result ? name).mapTo[RenderedModule] pipeTo sender
+      }
+    }
+    case AddModule()    => l("TBD")
+    case ChangeModule() => l("TBD")
   }
-}
-
-trait ModuleActor extends Actor {
-  val data : ModuleHTML
-  def receive = {
-    case _ => sender ! data
-  }
-}
-
-class Header extends ModuleActor {
-  val data : ModuleHTML = ModuleHTML(html.header.render(), html.header_head.render("header.css", "header.js"))
-}
-
-class Sidebar extends ModuleActor {
-  val data : ModuleHTML = ModuleHTML(html.sidebar.render("Bob", 42), html.header_head.render("sidebar.css", "sidebar.css"))
-}
-
-class Infobar extends ModuleActor {
-  val data : ModuleHTML = ModuleHTML(html.infobar.render(), html.infobar_head.render("infobar.css", "infobar.css"))
-}
-
-class Footer extends ModuleActor {
-  val data : ModuleHTML = ModuleHTML(html.footer.render(), html.footer_head.render("footer.css", "footer.js"))
-}
-
-class MainContainer extends ModuleActor {
-  val data : ModuleHTML = ModuleHTML(html.maincontainer.render(), html.maincontainer_head.render("maincontainer.css", "maincontainer.js"))
 }
