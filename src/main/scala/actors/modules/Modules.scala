@@ -29,7 +29,7 @@ class Sidebar extends ModuleActor {
 
 class Infobar extends ModuleActor {
   val TAG = "[InfobarActor] "
-  val data : ModuleHTML = ModuleHTML(html.infobar.render(), html.infobar_head.render("infobar.css", "infobar.css"))
+  val data : ModuleHTML = ModuleHTML(html.infobar.render(), html.infobar_head.render("infobar.css", "infobar.js"))
 }
 
 class Footer extends ModuleActor {

@@ -16,10 +16,7 @@ object Boot extends App with SprayCanHttpServerApp {
   var pagesRepo   : ActorRef = system.actorOf(Props(new PagesRepository(modulesRepo)),  "pages-repository")
   var handler     : RequestHandler = new RequestHandler(pagesRepo)
 
+  val service = system.actorOf(Props(new MyRouter(pagesRepo, handler)), "router")
 
-  // create and start our service actor
-  val service = system.actorOf(Props(new MyRouter(pagesRepo, handler)), "my-service")
-
-  // create a new HttpServer using our handler tell it where to bind to
   newHttpServer(service) ! Bind(interface = "localhost", port = 8080)
 }

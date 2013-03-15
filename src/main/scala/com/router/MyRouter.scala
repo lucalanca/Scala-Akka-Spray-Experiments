@@ -6,33 +6,34 @@ import spray.routing._
 import spray.http.MediaTypes
 import MediaTypes._
 import testing.RequestHandler
-import spray.routing.directives.{DirectoryListing, LogEntry}
 
 
 class MyRouter(pagesRepo: ActorRef, handler: RequestHandler) extends Actor with HttpServiceActor {
+  import spray.routing.Directives._
+  import spray.httpx.SprayJsonSupport._
+  import spray.httpx.encoding.Gzip
+
   val TAG = "[MyRouter] "
   def l(s: String) : Unit = { println(TAG+s) }
 
-  var appPath =  path("") | path("exchange")
+  val js = pathPrefix("js" / Rest) { fileName =>
+    get {
+      encodeResponse(Gzip) { getFromResource("js/" + fileName) }
+    }
+  }
+
+  val css = pathPrefix("css" / Rest) { fileName =>
+    get {
+      encodeResponse(Gzip) { getFromResource("css/" + fileName) }
+    }
+  }
 
   def receive = runRoute {
-    path("index") {
-      var page_path = "index"
-      l("client request for " + page_path)
-      l("myserviceactor path " + self.path.toString)
-      respondWithMediaType(`text/html`) {complete(handler.viewFor(page_path)) }
+    path("") {
+      respondWithMediaType(`text/html`) {complete(handler.viewFor("index")) }
     } ~
-    path("exchange") {
-      var page_path = "exchange"
-      l("client request for " + page_path)
-      l("myserviceactor path " + self.path.toString)
-      respondWithMediaType(`text/html`) {complete(handler.viewFor(page_path)) }
-    } ~
-    path("footer.js") {
-      l("JS: footer" )
-      getFromResourceDirectory("footer.js")
-
-
-    }
+    path(PathElement) { pagePath =>
+      respondWithMediaType(`text/html`) {complete(handler.viewFor(pagePath)) }
+    } ~ js ~ css
   }
 }
