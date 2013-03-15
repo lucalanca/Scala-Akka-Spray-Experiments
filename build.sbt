@@ -20,7 +20,8 @@ libraryDependencies ++= Seq(
   "org.scala-lang.plugins"  %   "continuations"             % "2.10.0"           ,
   "com.typesafe.akka"       %%  "akka-dataflow"             % "2.1.0"            ,
   "sprest"                  %% "sprest-core"                % "0.1.0-SNAPSHOT"   ,
-  "com.typesafe.akka"       %% "akka-cluster-experimental"  % "2.2-SNAPSHOT"
+  "com.typesafe.akka"       %% "akka-remote"                % "2.1.0",
+  "com.typesafe.akka"       %% "akka-cluster-experimental"  % "2.1.0"
 )
 
 autoCompilerPlugins := true
