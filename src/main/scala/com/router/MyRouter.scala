@@ -7,11 +7,17 @@ import MediaTypes._
 import com.router.RequestHandler
 
 
-class MyRouter(pagesRepo: ActorRef, handler: RequestHandler) extends Actor with HttpServiceActor {
+class MyRouter(pagesRepo: ActorRef, moduleRepo: ActorRef, handler: RequestHandler) extends Actor with HttpServiceActor {
   import spray.httpx.encoding.Gzip
 
   val TAG = "[MyRouter] "
   def l(s: String) : Unit = { println(TAG+s) }
+
+  val jsAPI = pathPrefix("module-api" / PathElement / PathElement) { (moduleId, path) =>
+    respondWithMediaType(`application/json`) {
+      complete(handler.jsonFor(moduleId, path))
+    }
+  }
 
   val js = pathPrefix("js" / Rest) { fileName =>
     get {

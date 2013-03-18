@@ -9,6 +9,7 @@ object Messages {
   case class ModuleHTML(body: Html, head: Html)
   case class PageHTML(heads: List[Html], bodies: List[Html])
   case class RenderedModule(name: String, rendered: ModuleHTML)
+  case class ModuleJsRequest(moduleId: String, path: String)
 
 
 

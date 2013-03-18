@@ -1,7 +1,7 @@
 package actors.modules
 
 import akka.actor.Actor
-import common.Messages.{RenderedModule, ModuleHTML}
+import common.Messages.{ModuleJsRequest, RenderedModule, ModuleHTML}
 
 
 trait ModuleActor extends Actor {
@@ -13,6 +13,9 @@ trait ModuleActor extends Actor {
     case name : String => {
       l("rendering...")
       sender ! RenderedModule(name, data)
+    }
+    case ModuleJsRequest(_, path) => {
+      sender ! "{'hello': 'world'}"
     }
   }
 }

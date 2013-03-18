@@ -14,7 +14,11 @@ resolvers ++= Seq(
 libraryDependencies ++= Seq(
   "io.spray"                %   "spray-can"                 % "1.1-M7"           ,
   "io.spray"                %   "spray-routing"             % "1.1-M7"           ,
+  "io.spray"                %   "spray-http"                % "1.1-M7"           ,
+  "io.spray"                %   "spray-httpx"               % "1.1-M7"           ,
+  "io.spray"                %   "spray-util"                % "1.1-M7"           ,
   "io.spray"                %   "spray-testkit"             % "1.1-M7"           ,
+  "io.spray"                %   "spray-client"              % "1.1-M7"           ,
   "com.typesafe.akka"       %%  "akka-actor"                % "2.1.2"            ,
   "org.specs2"              %%  "specs2"                    % "1.13"     % "test",
   "org.scala-lang.plugins"  %   "continuations"             % "2.10.0"           ,
@@ -23,6 +27,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka"       %% "akka-remote"                % "2.1.2",
   "com.typesafe.akka"       %% "akka-cluster-experimental"  % "2.1.2"
 )
+
 
 autoCompilerPlugins := true
 
