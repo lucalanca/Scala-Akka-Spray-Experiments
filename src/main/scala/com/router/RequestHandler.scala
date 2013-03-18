@@ -1,4 +1,4 @@
-package testing
+package com.router
 
 import common.Messages.PageRequest
 import concurrent.Await

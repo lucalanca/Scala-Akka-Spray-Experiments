@@ -1,16 +1,13 @@
 package com.example
 
-import akka.actor.{ActorRef, Props, ActorSystem, Actor}
-
+import akka.actor.{ActorRef, Actor}
 import spray.routing._
 import spray.http.MediaTypes
 import MediaTypes._
-import testing.RequestHandler
+import com.router.RequestHandler
 
 
 class MyRouter(pagesRepo: ActorRef, handler: RequestHandler) extends Actor with HttpServiceActor {
-  import spray.routing.Directives._
-  import spray.httpx.SprayJsonSupport._
   import spray.httpx.encoding.Gzip
 
   val TAG = "[MyRouter] "
