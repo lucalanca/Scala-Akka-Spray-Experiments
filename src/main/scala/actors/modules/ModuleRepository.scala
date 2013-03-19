@@ -7,7 +7,7 @@ import akka.util.Timeout
 import concurrent.ExecutionContext
 import twirl.api.Html
 import scala.collection.mutable.LinkedHashMap
-import common.Messages.ModuleRequest
+import common.Messages.ModuleHTMLRequest
 import common.Messages.RenderedModule
 import scala.Some
 import spray.routing.HttpServiceActor
@@ -38,9 +38,8 @@ class ModuleRepository extends Actor with HttpServiceActor {
     modulesRefMap.put("maincontainer", context.actorOf(Props[MainContainer], "maincontainer_actor"))
   }
 
-
   def receive = {
-    case ModuleRequest(name) => {
+    case ModuleHTMLRequest(name) => {
       l("got request for " + name)
       (modulesRefMap.get(name)) match {
         case None         => l("couldn't find module " + name)

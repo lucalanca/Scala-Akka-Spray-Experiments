@@ -21,10 +21,7 @@ import HttpMethods.GET
 import spray.http
 
 class CougarClientsRepository extends Actor {
-
-
   implicit val timeout: Timeout = 5 seconds span
-
 
   override def preStart() = {
     initializeCougarClients()
@@ -35,14 +32,13 @@ class CougarClientsRepository extends Actor {
 
 
   def initializeCougarClients() = {
-    // cougarRefMap.put("ERO"   , context.actorOf(Props(new IndexActor(self, modulesRepo))  , "index"))
-    val ioBridge = IOExtension(context.system).ioBridge()
-    httpClient = context.actorOf(Props(new HttpClient(ioBridge)), "http-client")
+    cougarRefMap.put("ERO"   , context.actorOf(Props[EROClient], "ero-client"))
+
 
   }
   def receive = {
     case _ => {
-      val responseFuture = httpClient.ask("http://github.com").mapTo[HttpResponse]
+      val responseFuture = httpClient.ask("http://www.google.com").mapTo[HttpResponse]
       responseFuture onComplete {
         case Success(response) =>
          println(
@@ -59,18 +55,4 @@ class CougarClientsRepository extends Actor {
       }
     }
   }
-}
-
-
-import spray.json.{JsonFormat, DefaultJsonProtocol}
-import scala.util.parsing.json.{JSONFormat}
-
-case class Elevation(location: Location, elevation: Double)
-case class Location(lat: Double, lng: Double)
-case class GoogleApiResult[T](status: String, results: List[T])
-
-object ElevationJsonProtocol extends DefaultJsonProtocol {
-  implicit val locationFormat = jsonFormat2(Location)
-  implicit val elevationFormat = jsonFormat2(Elevation)
-  implicit def googleApiResultFormat[T :JsonFormat] = jsonFormat2(GoogleApiResult.apply[T])
 }

@@ -1,42 +1,32 @@
 package com.example
 
-import akka.actor.{ActorRef, Actor}
+import akka.actor.{Props, ActorRef, Actor}
 import spray.routing._
-import spray.http.MediaTypes
+import spray.http.{DateTime, MediaTypes}
 import MediaTypes._
-import com.router.RequestHandler
+import com.router.HtmlRequestHandler
 
-
-class MyRouter(pagesRepo: ActorRef, moduleRepo: ActorRef, handler: RequestHandler) extends Actor with HttpServiceActor {
+class MyRouter(pagesRepo: ActorRef, moduleRepo: ActorRef, htmlHandler: ActorRef, jsonHandler: ActorRef) extends Actor with HttpServiceActor {
   import spray.httpx.encoding.Gzip
 
   val TAG = "[MyRouter] "
   def l(s: String) : Unit = { println(TAG+s) }
 
-  val jsAPI = pathPrefix("module-api" / PathElement / PathElement) { (moduleId, path) =>
-    respondWithMediaType(`application/json`) {
-      complete(handler.jsonFor(moduleId, path))
-    }
-  }
-
-  val js = pathPrefix("js" / Rest) { fileName =>
-    get {
-      encodeResponse(Gzip) { getFromResource("js/" + fileName) }
-    }
+  val js = pathPrefix("js" / Rest)  { fileName =>
+    get { encodeResponse(Gzip) { getFromResource("js/" + fileName) } }
   }
 
   val css = pathPrefix("css" / Rest) { fileName =>
-    get {
-      encodeResponse(Gzip) { getFromResource("css/" + fileName) }
-    }
+    get { encodeResponse(Gzip) { getFromResource("css/" + fileName) } }
   }
 
+  val favicon = path("favicon.ico") { complete("ok") }
+
   def receive = runRoute {
-    path("") {
-      respondWithMediaType(`text/html`) {complete(handler.viewFor("index")) }
+    favicon ~ js ~ css ~
+    pathPrefix("module-api") {
+      detachTo(_ => jsonHandler) { complete("ok") }
     } ~
-    path(PathElement) { pagePath =>
-      respondWithMediaType(`text/html`) {complete(handler.viewFor(pagePath)) }
-    } ~ js ~ css
+    detachTo(_ => htmlHandler) { complete("ok") }
   }
 }

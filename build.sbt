@@ -25,7 +25,8 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka"       %%  "akka-dataflow"             % "2.1.2"            ,
   "sprest"                  %% "sprest-core"                % "0.1.0-SNAPSHOT"   ,
   "com.typesafe.akka"       %% "akka-remote"                % "2.1.2",
-  "com.typesafe.akka"       %% "akka-cluster-experimental"  % "2.1.2"
+  "com.typesafe.akka"       %% "akka-cluster-experimental"  % "2.1.2",
+  "io.spray"                %%  "spray-json"                % "1.2.3"
 )
 
 

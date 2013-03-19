@@ -2,20 +2,25 @@ package com.router
 
 import common.Messages.{ModuleJsRequest, PageRequest}
 import concurrent.Await
-import akka.actor.ActorRef
+import akka.actor.{Actor, ActorRef}
 import akka.util.Timeout
 import akka.pattern.ask
-import twirl.api.Html
+import spray.routing.HttpServiceActor
+import spray.http.MediaTypes._
+import common.Messages.ModuleJsRequest
 
-class RequestHandler(pagesRepo: ActorRef, modulesRepo: ActorRef) {
+class JsonRequestHandler(modulesRepo: ActorRef) extends Actor with HttpServiceActor {
   val TAG = "[MyRouter] "
   def l(s: String) : Unit = { println(TAG+s) }
 
   implicit val timeout = Timeout(5000)
 
-  def viewFor(path: String) : String = {
-    var future = pagesRepo ? PageRequest(path)
-    Await.result(future, timeout.duration).asInstanceOf[Html].toString
+  def receive = runRoute {
+    respondWithMediaType(`application/json`) {
+      path(PathElement / PathElement) { (module_id, path) =>
+        complete(jsonFor(module_id, path))
+      }
+    }
   }
 
   def jsonFor(moduleId: String, path: String) : String = {

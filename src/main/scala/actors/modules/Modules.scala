@@ -2,6 +2,8 @@ package actors.modules
 
 import akka.actor.Actor
 import common.Messages.{ModuleJsRequest, RenderedModule, ModuleHTML}
+import spray.json._
+import DefaultJsonProtocol._
 
 
 trait ModuleActor extends Actor {
@@ -14,8 +16,18 @@ trait ModuleActor extends Actor {
       l("rendering...")
       sender ! RenderedModule(name, data)
     }
-    case ModuleJsRequest(_, path) => {
-      sender ! "{'hello': 'world'}"
+    case ModuleJsRequest(mod, path) => {
+      sender ! JsObject(
+        "path" -> JsString(path),
+        "requested module" -> JsString(mod),
+        "processing actor" -> JsString(TAG),
+        "system uptime" -> JsString(context.system.uptime.toString),
+        "start time" -> JsString(context.system.startTime.toString),
+        "red" -> JsNumber(123),
+        "green" -> JsNumber(11),
+        "blue" -> JsNumber(44),
+        "numbers" -> List(1,2,3).toJson
+      ).toString
     }
   }
 }

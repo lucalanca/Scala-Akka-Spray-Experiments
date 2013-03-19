@@ -10,6 +10,7 @@ import collection.mutable.ArrayBuffer
 import akka.actor.ActorRef
 import collection.mutable
 import spray.util.SprayActorLogging
+import spray.util._
 import com.typesafe.config.{ConfigFactory, Config}
 
 
@@ -34,7 +35,7 @@ abstract class PageActor(pagesRepo: ActorRef, modulesRepo: ActorRef, configPath:
       val it = modules.iterator()
       while(it.hasNext()){
         val m = it.next()
-        var future = modulesRepo ? ModuleRequest(m)
+        var future = modulesRepo ? ModuleHTMLRequest(m)
         var result = Await.result(future, timeout.duration).asInstanceOf[RenderedModule]
         l("received" + result.name)
         if (!modulesMap.contains(result.name))  modulesMap.put(result.name, result.rendered)
@@ -49,7 +50,7 @@ abstract class PageActor(pagesRepo: ActorRef, modulesRepo: ActorRef, configPath:
     }
 
 
-//      val futureList = Future.traverse((1 to modules.length).toList)(x => (moduleRepository ? ModuleRequest(modules(x-1))).mapTo[ModuleHTML])
+//      val futureList = Future.traverse((1 to modules.length).toList)(x => (moduleRepository ? ModuleHTMLRequest(modules(x-1))).mapTo[ModuleHTML])
 //      futureList.map { list =>
 //        list.foreach{ module =>
 //            println("received module " + module.head)
