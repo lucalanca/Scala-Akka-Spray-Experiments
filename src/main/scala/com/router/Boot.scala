@@ -1,13 +1,17 @@
 package com.example
 
 import spray.can.server.SprayCanHttpServerApp
-import akka.actor.{ActorRef, Props}
+import akka.actor.{Props, ActorRef}
 import com.typesafe.config.{ConfigObject, Config, ConfigFactory}
 import actors.pages.PagesRepository
 import actors.modules.ModuleRepository
 import com.router.{JsonRequestHandler, HtmlRequestHandler}
-import actors.cougar.CougarClientsRepository
+import actors.cougar.{EROClient, CougarClientsRepository}
 import com.router.HtmlRequestHandler
+import common.Messages.ModuleJsonRequest
+import concurrent.Await
+import akka.util.Timeout
+import akka.pattern.ask
 
 
 object Boot extends App with SprayCanHttpServerApp {
@@ -20,6 +24,10 @@ object Boot extends App with SprayCanHttpServerApp {
 
 
   val service = system.actorOf(Props(new MyRouter(pagesRepo, modulesRepo, htmlHandler, jsonHandler)), "router")
+
+
+
+
 
 
   newHttpServer(service) ! Bind(interface = "localhost", port = 8080)

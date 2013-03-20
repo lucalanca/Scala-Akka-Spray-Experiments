@@ -19,8 +19,14 @@ import spray.httpx.SprayJsonSupport
 import spray.http._
 import HttpMethods.GET
 import spray.http
+import common.Messages.{ModuleJsonRequest, RenderedModule}
+import akka.pattern._
+import concurrent.Await
 
 class CougarClientsRepository extends Actor {
+
+  val TAG : String = "[CougarRepo] "
+  def l(s: String) : Unit = { println(TAG+s) }
   implicit val timeout: Timeout = 5 seconds span
 
   override def preStart() = {
@@ -37,21 +43,20 @@ class CougarClientsRepository extends Actor {
 
   }
   def receive = {
-    case _ => {
-      val responseFuture = httpClient.ask("http://www.google.com").mapTo[HttpResponse]
-      responseFuture onComplete {
-        case Success(response) =>
-         println(
-            """|Response for GET request to github.com:
-              |status : {}
-              |headers: {}
-              |body   : {}""".stripMargin,
-            response.status.value, response.headers.mkString("\n  ", "\n  ", ""), response.entity.asString
-          )
-
-        case Failure(error) =>
-          println(error, "Couldn't get http://github.com")
-
+    case m => {
+      l("someone wants something")
+      val myPath = "/www/sports/exchange/readonly/v1.0/bymarket"
+      val params = "?currencyCode=GBP&alt=json&locale=en_GB&types=MARKET_STATE,MARKET_RATES,MARKET_DESCRIPTION,EVENT,RUNNER_DESCRIPTION,RUNNER_STATE,RUNNER_EXCHANGE_PRICES_BEST,RUNNER_METADATA&marketIds=1.108633981&ts=1363711129952"
+      (cougarRefMap.get("ERO")) match {
+        case None         => println("couldn't find ERO")
+        case Some(result) => {
+          l("found ERO")
+          var future = (result ? ModuleJsonRequest("ERO", myPath, params, 20))
+          l("received future: " + future)
+          var response = Await.result(future, timeout.duration).asInstanceOf[HttpResponse]
+          l("received something" + response)
+          sender ! response
+        }
       }
     }
   }

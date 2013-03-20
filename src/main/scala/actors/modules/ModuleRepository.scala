@@ -11,12 +11,16 @@ import common.Messages.ModuleHTMLRequest
 import common.Messages.RenderedModule
 import scala.Some
 import spray.routing.HttpServiceActor
+import collection.mutable
 
 
 class ModuleRepository extends Actor with HttpServiceActor {
   val TAG = "[ModuleRepository] "
   def l(s: String) : Unit = { println(TAG+s) }
 
+
+  var htmlCache : mutable.HashMap[ModuleHTMLRequest, ModuleHTML] = new mutable.HashMap[ModuleHTMLRequest, ModuleHTML]()
+  var jsonCache : mutable.HashMap[ModuleJsonRequest, ModuleJson] = new mutable.HashMap[ModuleJsonRequest, ModuleJson]()
   import context.dispatcher
 
   implicit val timeout = Timeout(5000)
@@ -39,22 +43,23 @@ class ModuleRepository extends Actor with HttpServiceActor {
   }
 
   def receive = {
-    case ModuleHTMLRequest(name) => {
+    case ModuleHTMLRequest(name,_) => {
       l("got request for " + name)
       (modulesRefMap.get(name)) match {
         case None         => l("couldn't find module " + name)
         case Some(result) => (result ? name).mapTo[RenderedModule] pipeTo sender
       }
     }
-    case ModuleJsRequest(name, path) => {
+    case ModuleJsonRequest(name, path, params, _) => {
       (modulesRefMap.get(name)) match {
         case None         => l("couldn't find module " + name)
-        case Some(result) => (result ? ModuleJsRequest(name, path)).mapTo[String] pipeTo sender
+        case Some(result) => {
+          l("json request")
+          (result ? ModuleJsonRequest(name, path, params, 10)).mapTo[String] pipeTo sender
+        }
       }
     }
     case AddModule()    => l("TBD")
     case ChangeModule() => l("TBD")
   }
-
-
 }

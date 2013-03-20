@@ -30,7 +30,7 @@ class PagesRepository(modulesRepo: ActorRef) extends Actor {
   }
 
   def receive = {
-    case PageRequest(name) => {
+    case PageRequest(name, _) => {
       l("got request for " + name)
       (pagesRefMap.get(name)) match {
         case None         => l("couldn't find page " + name) // TODO SENT TO PARENT OR SOMETHING
