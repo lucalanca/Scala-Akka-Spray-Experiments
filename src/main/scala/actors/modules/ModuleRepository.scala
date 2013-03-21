@@ -1,65 +1,97 @@
 package actors.modules
 
-import akka.actor.{ActorRef, Props, Actor}
-import akka.pattern._
+import akka.actor._
 import common.Messages._
 import akka.util.Timeout
 import concurrent.ExecutionContext
 import twirl.api.Html
-import scala.collection.mutable.LinkedHashMap
 import common.Messages.ModuleHTMLRequest
-import common.Messages.RenderedModule
 import scala.Some
 import spray.routing.HttpServiceActor
 import collection.mutable
+import common.ModuleType
+import akka.cluster._
+import akka.cluster.ClusterEvent._
+import common.Messages.ChangeModule
+import common.Messages.ModuleJsonRequest
+import common.Messages.ModuleHTMLRequest
+import common.Messages.AddModule
+import scala.Some
+import common.ModuleType
+
+import akka.contrib.pattern.ClusterSingletonManager
+import com.typesafe.config.ConfigFactory
 
 
-class ModuleRepository extends Actor with HttpServiceActor {
-  val TAG = "[ModuleRepository] "
-  def l(s: String) : Unit = { println(TAG+s) }
-
-
-  var htmlCache : mutable.HashMap[ModuleHTMLRequest, ModuleHTML] = new mutable.HashMap[ModuleHTMLRequest, ModuleHTML]()
-  var jsonCache : mutable.HashMap[ModuleJsonRequest, ModuleJson] = new mutable.HashMap[ModuleJsonRequest, ModuleJson]()
+class ModuleRepository extends Actor with HttpServiceActor with ActorLogging {
+  import scala.collection.mutable.Map
   import context.dispatcher
-
   implicit val timeout = Timeout(5000)
 
+  var modules     = Map.empty[ModuleType, ActorRef]
+
+  override def postStop(): Unit = Cluster(context.system).unsubscribe(self)
+
   override def preStart() = {
-    initializeModules()
-
-
+    initializeMockModules()
+    Cluster(context.system).subscribe(self, classOf[LeaderChanged])
+    l("i was started!!")
+    l(self.path.toString)
   }
 
-  // TODO: load modules from a file or something
-  var modulesRefMap = LinkedHashMap[String,ActorRef]()
-
-  def initializeModules() = {
-    modulesRefMap.put("header"       , context.actorOf(Props[Header]       , "header_actor"))
-    modulesRefMap.put("sidebar"      , context.actorOf(Props[Sidebar]      , "sidebar_actor"))
-    modulesRefMap.put("infobar"      , context.actorOf(Props[Infobar]      , "infobar_actor"))
-    modulesRefMap.put("footer"       , context.actorOf(Props[Footer]       , "footer_actor"))
-    modulesRefMap.put("maincontainer", context.actorOf(Props[MainContainer], "maincontainer_actor"))
+  def initializeMockModules() = {
+    modules  = Map.empty[ModuleType, ActorRef]
+    modules += (ModuleType("header")        -> context.actorOf(Props[Header] , "header_actor"))
+    modules += (ModuleType("sidebar")       -> context.actorOf(Props[Sidebar] , "sidebar_actor"))
+    modules += (ModuleType("infobar")       -> context.actorOf(Props[Infobar] , "infobar_actor"))
+    modules += (ModuleType("footer")        -> context.actorOf(Props[Footer] , "footer_actor"))
+    modules += (ModuleType("maincontainer") -> context.actorOf(Props[MainContainer] , "maincontainer_actor"))
   }
 
   def receive = {
     case ModuleHTMLRequest(name,_) => {
-      l("got request for " + name)
-      (modulesRefMap.get(name)) match {
-        case None         => l("couldn't find module " + name)
-        case Some(result) => (result ? name).mapTo[RenderedModule] pipeTo sender
+      (modules.get(ModuleType(name))) match {
+          case None        => l("fuck off")  // TODO: some kind of error handling here
+          case Some(actor) => actor forward name
       }
     }
     case ModuleJsonRequest(name, path, params, _) => {
-      (modulesRefMap.get(name)) match {
-        case None         => l("couldn't find module " + name)
-        case Some(result) => {
-          l("json request")
-          (result ? ModuleJsonRequest(name, path, params, 10)).mapTo[String] pipeTo sender
-        }
+      (modules.get(ModuleType(name))) match {
+        case None        => l("fuck off")
+        case Some(actor) => actor forward ModuleJsonRequest(name,path,params, 10)
       }
     }
     case AddModule()    => l("TBD")
     case ChangeModule() => l("TBD")
+  }
+
+
+
+  val TAG = "[ModuleRepository] "
+  def l(s: String) : Unit = { println(TAG+s) }
+
+
+}
+
+object ModuleRepository  {
+
+
+
+
+
+  def main(args: Array[String]): Unit = {
+    val config =
+      (if (args.nonEmpty) ConfigFactory.parseString("akka.remote.netty.tcp.port=${args(0)}")
+      else ConfigFactory.empty).withFallback(
+        ConfigFactory.parseString("akka.cluster.roles = [modulerepository]")).
+        withFallback(ConfigFactory.load())
+
+    val system = ActorSystem("ClusterSystem", config)
+    system.actorOf(Props[ModuleRepository], "my-modulerepository")
+    system.actorOf(Props(new ClusterSingletonManager(
+      singletonProps = handOverData => Props[ModuleRepository],
+      singletonName = "master",
+      terminationMessage = PoisonPill)),
+    name = "singleton")
   }
 }

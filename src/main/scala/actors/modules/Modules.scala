@@ -33,3 +33,4 @@ class MainContainer extends ModuleActor("modules/maincontainer.conf") {
   val TAG = "[MainContainerActor] "
   val data : ModuleHTML = ModuleHTML(html.maincontainer.render(), html.maincontainer_head.render("maincontainer.css", "maincontainer.js"))
 }
+
